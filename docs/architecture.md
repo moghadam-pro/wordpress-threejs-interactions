@@ -24,14 +24,16 @@ The Three.js layer renders a procedurally displaced point grid. A CSS gradient s
 
 `stats-section.js` builds four generated target topologies:
 
-1. radial burst;
+1. fiber-optic spray;
 2. hemisphere routes;
 3. vertical wave ribbons;
 4. mirrored hourglass curves.
 
 Every topology is represented by compatible line and point buffers. During a state change, the shader/controller interpolates from the current coordinates into an intermediate particle cloud, then from the cloud into the target coordinates. This preserves a continuous visual transition even though the final structures differ.
 
-Pointer coordinates are converted into local canvas space and used to repel nearby vertices with a smooth falloff. The pointer also offsets a soft background light, making the deformation readable without adding DOM layers.
+The first topology has a dedicated indexed ribbon layer. Every strand is a continuous triangle strip with a pixel-derived world-space width, a low-opacity glow pass, a solid core pass, and an additive endpoint sprite. Two low-frequency waves create the idle breeze while a root-weighted flex envelope keeps the bundle anchored.
+
+Pointer coordinates are converted into local canvas space. For the fiber state, a broad falloff opens an exclusion channel and every strand selects a consistent side from its guide endpoint, producing a continuous brush-like bend rather than unrelated vertex displacement. Other states keep the lighter line/point renderer. The pointer also offsets a soft background light without adding DOM layers.
 
 ## Lifecycle and performance
 
@@ -43,4 +45,3 @@ Pointer coordinates are converted into local canvas space and used to repel near
 - Each root stores an initialized flag so repeated `init()` calls are safe.
 
 For pages containing many canvases, load instances lazily or limit the number visible at once. Measure with the Performance panel on representative mobile devices; desktop GPU timing alone is not a sufficient benchmark.
-

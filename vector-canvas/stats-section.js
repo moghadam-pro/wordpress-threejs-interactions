@@ -1,6 +1,6 @@
 const THREE_MODULE_URL = "https://cdn.jsdelivr.net/npm/three@0.178.0/build/three.module.min.js";
 const reduceMotionQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-const STATE_LABELS = ["فرم شعاعی", "فرم نیم‌کره", "فرم موجی", "فرم ساعت‌شنی"];
+const STATE_LABELS = ["افشانه فیبرنوری", "فرم نیم‌کره", "فرم موجی", "فرم ساعت‌شنی"];
 
 let THREE = null;
 
@@ -28,6 +28,27 @@ function quadraticBezier(start, control, end, t) {
   ];
 }
 
+function cubicBezier(start, controlA, controlB, end, t) {
+  const inverse = 1 - t;
+  const inverseSquared = inverse * inverse;
+  const tSquared = t * t;
+
+  return [
+    inverseSquared * inverse * start[0] +
+      3 * inverseSquared * t * controlA[0] +
+      3 * inverse * tSquared * controlB[0] +
+      tSquared * t * end[0],
+    inverseSquared * inverse * start[1] +
+      3 * inverseSquared * t * controlA[1] +
+      3 * inverse * tSquared * controlB[1] +
+      tSquared * t * end[1],
+    inverseSquared * inverse * start[2] +
+      3 * inverseSquared * t * controlA[2] +
+      3 * inverse * tSquared * controlB[2] +
+      tSquared * t * end[2],
+  ];
+}
+
 function getStatePosition(state, lineIndex, lineCount, t) {
   const normal = lineIndex / Math.max(lineCount - 1, 1);
   const seedA = hash(lineIndex, 1);
@@ -35,16 +56,32 @@ function getStatePosition(state, lineIndex, lineCount, t) {
   const seedC = hash(lineIndex, 3);
 
   if (state === 0) {
-    const angle = Math.PI * (0.075 + normal * 0.85) + (seedA - 0.5) * 0.035;
-    const length = 0.73 + seedB * 0.46;
-    const origin = [0, -0.62, 0];
-    const bend = (seedC - 0.5) * Math.sin(Math.PI * t) * 0.13;
-
-    return [
-      origin[0] + Math.cos(angle) * length * t + bend,
-      origin[1] + Math.sin(angle) * length * t,
-      (seedA - 0.5) * 0.09 * t,
+    const angle = Math.PI * (0.1 + normal * 0.8) + (seedA - 0.5) * 0.024;
+    const length = 0.8 + seedB * 0.34;
+    const origin = [
+      (seedA - 0.5) * 0.034,
+      -0.635 + (seedC - 0.5) * 0.018,
+      (seedB - 0.5) * 0.025,
     ];
+    const endpoint = [
+      origin[0] + Math.cos(angle) * length,
+      origin[1] + Math.sin(angle) * length,
+      (seedA - 0.5) * 0.115,
+    ];
+    const launchAngle = lerp(Math.PI * 0.5, angle, 0.22);
+    const lateralBend = (seedC - 0.5) * 0.09;
+    const controlA = [
+      origin[0] + Math.cos(launchAngle) * length * 0.34,
+      origin[1] + Math.sin(launchAngle) * length * 0.34,
+      origin[2] + (seedB - 0.5) * 0.035,
+    ];
+    const controlB = [
+      endpoint[0] - Math.cos(angle) * length * 0.3 - Math.sin(angle) * lateralBend,
+      endpoint[1] - Math.sin(angle) * length * 0.3 + Math.cos(angle) * lateralBend,
+      endpoint[2] * 0.76,
+    ];
+
+    return cubicBezier(origin, controlA, controlB, endpoint, t);
   }
 
   if (state === 1) {
@@ -159,6 +196,188 @@ const backgroundFragmentShader = `
   }
 `;
 
+const fiberVertexShader = `
+  uniform float uFromState;
+  uniform float uToState;
+  uniform float uProgress;
+  uniform float uTime;
+  uniform float uHover;
+  uniform float uMotion;
+  uniform float uLineWidthWorld;
+  uniform float uWidthScale;
+  uniform vec2 uPointerWorld;
+
+  attribute vec3 aPrevious;
+  attribute vec3 aNext;
+  attribute float aSide;
+  attribute float aT;
+  attribute float aSeed;
+  attribute float aDepth;
+  attribute float aGuideX;
+
+  varying float vAcross;
+  varying float vAlong;
+  varying float vDepth;
+  varying float vInteraction;
+  varying float vVisibility;
+
+  float stateZero(float state) {
+    return 1.0 - step(0.5, abs(state));
+  }
+
+  float fiberVisibility() {
+    float eased = uProgress * uProgress * (3.0 - 2.0 * uProgress);
+    float collapse = pow(max(sin(uProgress * 3.14159265), 0.0), 0.72);
+    return mix(stateZero(uFromState), stateZero(uToState), eased) * (1.0 - collapse);
+  }
+
+  vec3 moveFiber(vec3 source, float along, float seed, float depth, float guideX) {
+    vec3 moved = source;
+    float flex = pow(smoothstep(0.015, 1.0, along), 1.38);
+    float phase = seed * 6.2831853;
+    float breeze =
+      sin(uTime * 0.48 + phase) * 0.62 +
+      sin(uTime * 0.21 + phase * 1.73 + 1.2) * 0.38;
+    float crossBreeze = sin(uTime * 0.31 + phase * 2.11) * 0.0045;
+
+    moved.x += (breeze * (0.014 + depth * 0.009) + crossBreeze) * flex * uMotion;
+    moved.y += cos(uTime * 0.37 + phase * 1.27) * 0.0042 * flex * uMotion;
+
+    vec2 delta = moved.xy - uPointerWorld;
+    float distanceToPointer = length(delta);
+    float sideBasis = guideX - uPointerWorld.x + (seed - 0.5) * 0.028;
+    float sideDirection = abs(sideBasis) < 0.008
+      ? (seed < 0.5 ? -1.0 : 1.0)
+      : sign(sideBasis);
+    vec2 pushDirection = normalize(vec2(sideDirection, clamp(delta.y * 1.25, -0.14, 0.14)));
+    float proximity = 1.0 - smoothstep(0.055, 0.285, distanceToPointer);
+    float rootAnchor = smoothstep(0.035, 0.7, along);
+    float interaction = proximity * uHover;
+
+    moved.xy += pushDirection * interaction * (0.112 + depth * 0.032) * rootAnchor;
+    moved.z += interaction * 0.045 * rootAnchor;
+    return moved;
+  }
+
+  void main() {
+    vec3 center = moveFiber(position, aT, aSeed, aDepth, aGuideX);
+    vec3 previous = moveFiber(aPrevious, max(aT - 0.016, 0.0), aSeed, aDepth, aGuideX);
+    vec3 next = moveFiber(aNext, min(aT + 0.016, 1.0), aSeed, aDepth, aGuideX);
+
+    vec2 tangent = next.xy - previous.xy;
+    float tangentLength = length(tangent);
+    tangent = tangentLength > 0.00001 ? tangent / tangentLength : vec2(0.0, 1.0);
+    vec2 normal = vec2(-tangent.y, tangent.x);
+    float taper = mix(0.82, 1.12, smoothstep(0.0, 0.82, aT));
+    float halfWidth = uLineWidthWorld * uWidthScale * taper * (0.78 + aDepth * 0.34) * 0.5;
+    center.xy += normal * aSide * halfWidth;
+
+    vec2 pointerDelta = center.xy - uPointerWorld;
+    vInteraction = (1.0 - smoothstep(0.055, 0.285, length(pointerDelta))) * uHover;
+    vAcross = aSide;
+    vAlong = aT;
+    vDepth = aDepth;
+    vVisibility = fiberVisibility();
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(center, 1.0);
+  }
+`;
+
+const fiberFragmentShader = `
+  precision highp float;
+
+  uniform float uOpacity;
+
+  varying float vAcross;
+  varying float vAlong;
+  varying float vDepth;
+  varying float vInteraction;
+  varying float vVisibility;
+
+  void main() {
+    float edge = 1.0 - smoothstep(0.62, 1.0, abs(vAcross));
+    float tipEnergy = smoothstep(0.58, 1.0, vAlong);
+    vec3 cool = vec3(0.64, 0.72, 1.0);
+    vec3 white = vec3(1.0, 0.985, 1.0);
+    vec3 color = mix(cool, white, 0.33 + tipEnergy * 0.44 + vInteraction * 0.16);
+    float alpha = edge * uOpacity * (0.42 + vDepth * 0.4 + tipEnergy * 0.18) * vVisibility;
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
+const fiberTipVertexShader = `
+  uniform float uFromState;
+  uniform float uToState;
+  uniform float uProgress;
+  uniform float uTime;
+  uniform float uHover;
+  uniform float uMotion;
+  uniform float uPixelRatio;
+  uniform vec2 uPointerWorld;
+
+  attribute float aSeed;
+  attribute float aDepth;
+
+  varying float vDepth;
+  varying float vInteraction;
+  varying float vVisibility;
+
+  float stateZero(float state) {
+    return 1.0 - step(0.5, abs(state));
+  }
+
+  vec3 moveTip(vec3 source, float seed, float depth) {
+    vec3 moved = source;
+    float phase = seed * 6.2831853;
+    float breeze =
+      sin(uTime * 0.48 + phase) * 0.62 +
+      sin(uTime * 0.21 + phase * 1.73 + 1.2) * 0.38;
+    moved.x += (breeze * (0.014 + depth * 0.009) + sin(uTime * 0.31 + phase * 2.11) * 0.0045) * uMotion;
+    moved.y += cos(uTime * 0.37 + phase * 1.27) * 0.0042 * uMotion;
+
+    vec2 delta = moved.xy - uPointerWorld;
+    float distanceToPointer = length(delta);
+    float sideBasis = source.x - uPointerWorld.x + (seed - 0.5) * 0.028;
+    float sideDirection = abs(sideBasis) < 0.008
+      ? (seed < 0.5 ? -1.0 : 1.0)
+      : sign(sideBasis);
+    vec2 pushDirection = normalize(vec2(sideDirection, clamp(delta.y * 1.25, -0.14, 0.14)));
+    float interaction = (1.0 - smoothstep(0.055, 0.285, distanceToPointer)) * uHover;
+    moved.xy += pushDirection * interaction * (0.112 + depth * 0.032);
+    moved.z += interaction * 0.045;
+    return moved;
+  }
+
+  void main() {
+    float eased = uProgress * uProgress * (3.0 - 2.0 * uProgress);
+    float collapse = pow(max(sin(uProgress * 3.14159265), 0.0), 0.72);
+    vVisibility = mix(stateZero(uFromState), stateZero(uToState), eased) * (1.0 - collapse);
+
+    vec3 positionValue = moveTip(position, aSeed, aDepth);
+    float distanceToPointer = length(positionValue.xy - uPointerWorld);
+    vInteraction = (1.0 - smoothstep(0.055, 0.285, distanceToPointer)) * uHover;
+    vDepth = aDepth;
+    gl_Position = projectionMatrix * modelViewMatrix * vec4(positionValue, 1.0);
+    gl_PointSize = (8.0 + aDepth * 5.0 + vInteraction * 2.0) * uPixelRatio;
+  }
+`;
+
+const fiberTipFragmentShader = `
+  precision highp float;
+
+  varying float vDepth;
+  varying float vInteraction;
+  varying float vVisibility;
+
+  void main() {
+    float distanceFromCenter = length(gl_PointCoord - 0.5);
+    float halo = 1.0 - smoothstep(0.12, 0.5, distanceFromCenter);
+    float core = 1.0 - smoothstep(0.0, 0.115, distanceFromCenter);
+    vec3 color = mix(vec3(0.54, 0.64, 1.0), vec3(1.0), core * 0.9 + vInteraction * 0.1);
+    float alpha = (halo * (0.34 + vDepth * 0.22) + core * 0.72) * vVisibility;
+    gl_FragColor = vec4(color, alpha);
+  }
+`;
+
 const morphVertexShader = `
   uniform float uFromState;
   uniform float uToState;
@@ -178,6 +397,7 @@ const morphVertexShader = `
   varying float vAlpha;
   varying float vSeed;
   varying float vInteraction;
+  varying float vStateZero;
 
   vec3 selectState(float state) {
     float w0 = 1.0 - smoothstep(0.01, 0.45, abs(state - 0.0));
@@ -206,6 +426,9 @@ const morphVertexShader = `
     vAlpha = (0.24 + aDepth * 0.68) * max(0.035, 1.0 - collapse);
     vSeed = aSeed;
     vInteraction = interaction;
+    float fromZero = 1.0 - step(0.5, abs(uFromState));
+    float toZero = 1.0 - step(0.5, abs(uToState));
+    vStateZero = mix(fromZero, toZero, eased) * (1.0 - collapse);
     gl_Position = projectionMatrix * modelViewMatrix * vec4(positionValue, 1.0);
   }
 `;
@@ -216,12 +439,13 @@ const morphFragmentShader = `
   varying float vAlpha;
   varying float vSeed;
   varying float vInteraction;
+  varying float vStateZero;
 
   void main() {
     vec3 cool = vec3(0.73, 0.78, 1.0);
     vec3 warm = vec3(1.0, 1.0, 1.0);
     vec3 color = mix(cool, warm, 0.42 + vSeed * 0.38 + vInteraction * 0.35);
-    gl_FragColor = vec4(color, vAlpha);
+    gl_FragColor = vec4(color, vAlpha * (1.0 - vStateZero));
   }
 `;
 
@@ -243,6 +467,7 @@ const pointsVertexShader = `
 
   varying float vAlpha;
   varying float vInteraction;
+  varying float vStateZero;
 
   vec3 selectState(float state) {
     float w0 = 1.0 - smoothstep(0.01, 0.45, abs(state - 0.0));
@@ -266,6 +491,9 @@ const pointsVertexShader = `
 
     vInteraction = interaction;
     vAlpha = mix(0.18 + aEndpoint * 0.62, 0.98, collapse);
+    float fromZero = 1.0 - step(0.5, abs(uFromState));
+    float toZero = 1.0 - step(0.5, abs(uToState));
+    vStateZero = mix(fromZero, toZero, eased) * (1.0 - collapse);
 
     gl_Position = projectionMatrix * modelViewMatrix * vec4(positionValue, 1.0);
     gl_PointSize = (1.45 + collapse * 2.35 + interaction * 5.0 + aSeed * 0.65) * uPixelRatio;
@@ -277,13 +505,14 @@ const pointsFragmentShader = `
 
   varying float vAlpha;
   varying float vInteraction;
+  varying float vStateZero;
 
   void main() {
     vec2 point = gl_PointCoord - 0.5;
     float circle = smoothstep(0.5, 0.12, length(point));
     float core = smoothstep(0.18, 0.0, length(point));
     vec3 color = mix(vec3(0.78, 0.83, 1.0), vec3(1.0), core * 0.8 + vInteraction * 0.4);
-    gl_FragColor = vec4(color, circle * vAlpha);
+    gl_FragColor = vec4(color, circle * vAlpha * (1.0 - vStateZero));
   }
 `;
 
@@ -293,7 +522,7 @@ class FourStateVectorScene {
     this.canvas = canvas;
     this.THREE = Three;
     this.lineCount = 190;
-    this.samplesPerLine = 34;
+    this.samplesPerLine = 64;
     this.currentState = clamp(Number(root.dataset.state) || 0, 0, 3);
     this.fromState = this.currentState;
     this.toState = this.currentState;
@@ -341,9 +570,12 @@ class FourStateVectorScene {
       uPixelRatio: { value: 1 },
       uPointerWorld: { value: new Three.Vector2(0, 0) },
       uPointerUv: { value: new Three.Vector2(0.5, 0.5) },
+      uLineWidthWorld: { value: 0.002 },
+      uMotion: { value: reduceMotionQuery.matches ? 0 : 1 },
     };
 
     this.buildBackground();
+    this.buildFiberOptics();
     this.buildLines();
     this.buildPoints();
 
@@ -387,6 +619,127 @@ class FourStateVectorScene {
     this.background = new Three.Mesh(new Three.PlaneGeometry(1, 1), material);
     this.background.position.z = -2;
     this.scene.add(this.background);
+  }
+
+  buildFiberOptics() {
+    const Three = this.THREE;
+    const verticesPerLine = this.samplesPerLine * 2;
+    const vertexCount = this.lineCount * verticesPerLine;
+    const positions = new Float32Array(vertexCount * 3);
+    const previous = new Float32Array(vertexCount * 3);
+    const next = new Float32Array(vertexCount * 3);
+    const sides = new Float32Array(vertexCount);
+    const progress = new Float32Array(vertexCount);
+    const seeds = new Float32Array(vertexCount);
+    const depths = new Float32Array(vertexCount);
+    const guideX = new Float32Array(vertexCount);
+    const indices = new Uint32Array(this.lineCount * (this.samplesPerLine - 1) * 6);
+    const sampleStep = 1 / (this.samplesPerLine - 1);
+
+    for (let lineIndex = 0; lineIndex < this.lineCount; lineIndex += 1) {
+      const seed = hash(lineIndex, 11);
+      const depth = 0.25 + hash(lineIndex, 12) * 0.75;
+      const endpointX = getStatePosition(0, lineIndex, this.lineCount, 1)[0];
+
+      for (let sample = 0; sample < this.samplesPerLine; sample += 1) {
+        const t = sample * sampleStep;
+        const center = getStatePosition(0, lineIndex, this.lineCount, t);
+        const previousPoint = getStatePosition(0, lineIndex, this.lineCount, Math.max(t - sampleStep, 0));
+        const nextPoint = getStatePosition(0, lineIndex, this.lineCount, Math.min(t + sampleStep, 1));
+
+        for (let sideIndex = 0; sideIndex < 2; sideIndex += 1) {
+          const vertex = lineIndex * verticesPerLine + sample * 2 + sideIndex;
+          const vertex3 = vertex * 3;
+          positions.set(center, vertex3);
+          previous.set(previousPoint, vertex3);
+          next.set(nextPoint, vertex3);
+          sides[vertex] = sideIndex === 0 ? -1 : 1;
+          progress[vertex] = t;
+          seeds[vertex] = seed;
+          depths[vertex] = depth;
+          guideX[vertex] = endpointX;
+        }
+      }
+
+      for (let segment = 0; segment < this.samplesPerLine - 1; segment += 1) {
+        const indexOffset = (lineIndex * (this.samplesPerLine - 1) + segment) * 6;
+        const current = lineIndex * verticesPerLine + segment * 2;
+        const following = current + 2;
+        indices[indexOffset] = current;
+        indices[indexOffset + 1] = current + 1;
+        indices[indexOffset + 2] = following;
+        indices[indexOffset + 3] = following;
+        indices[indexOffset + 4] = current + 1;
+        indices[indexOffset + 5] = following + 1;
+      }
+    }
+
+    const geometry = new Three.BufferGeometry();
+    geometry.setAttribute("position", new Three.BufferAttribute(positions, 3));
+    geometry.setAttribute("aPrevious", new Three.BufferAttribute(previous, 3));
+    geometry.setAttribute("aNext", new Three.BufferAttribute(next, 3));
+    geometry.setAttribute("aSide", new Three.BufferAttribute(sides, 1));
+    geometry.setAttribute("aT", new Three.BufferAttribute(progress, 1));
+    geometry.setAttribute("aSeed", new Three.BufferAttribute(seeds, 1));
+    geometry.setAttribute("aDepth", new Three.BufferAttribute(depths, 1));
+    geometry.setAttribute("aGuideX", new Three.BufferAttribute(guideX, 1));
+    geometry.setIndex(new Three.BufferAttribute(indices, 1));
+
+    const createMaterial = (widthScale, opacity, blending) =>
+      new Three.ShaderMaterial({
+        uniforms: {
+          ...this.sharedUniforms,
+          uWidthScale: { value: widthScale },
+          uOpacity: { value: opacity },
+        },
+        vertexShader: fiberVertexShader,
+        fragmentShader: fiberFragmentShader,
+        transparent: true,
+        depthWrite: false,
+        depthTest: false,
+        side: Three.DoubleSide,
+        blending,
+      });
+
+    this.fiberGlow = new Three.Mesh(geometry, createMaterial(6.2, 0.13, Three.AdditiveBlending));
+    this.fiberGlow.frustumCulled = false;
+    this.fiberGlow.renderOrder = 1;
+    this.scene.add(this.fiberGlow);
+
+    this.fiberCore = new Three.Mesh(geometry, createMaterial(1.9, 0.88, Three.NormalBlending));
+    this.fiberCore.frustumCulled = false;
+    this.fiberCore.renderOrder = 2;
+    this.scene.add(this.fiberCore);
+
+    const tipPositions = new Float32Array(this.lineCount * 3);
+    const tipSeeds = new Float32Array(this.lineCount);
+    const tipDepths = new Float32Array(this.lineCount);
+
+    for (let lineIndex = 0; lineIndex < this.lineCount; lineIndex += 1) {
+      tipPositions.set(getStatePosition(0, lineIndex, this.lineCount, 1), lineIndex * 3);
+      tipSeeds[lineIndex] = hash(lineIndex, 11);
+      tipDepths[lineIndex] = 0.25 + hash(lineIndex, 12) * 0.75;
+    }
+
+    const tipGeometry = new Three.BufferGeometry();
+    tipGeometry.setAttribute("position", new Three.BufferAttribute(tipPositions, 3));
+    tipGeometry.setAttribute("aSeed", new Three.BufferAttribute(tipSeeds, 1));
+    tipGeometry.setAttribute("aDepth", new Three.BufferAttribute(tipDepths, 1));
+
+    const tipMaterial = new Three.ShaderMaterial({
+      uniforms: this.sharedUniforms,
+      vertexShader: fiberTipVertexShader,
+      fragmentShader: fiberTipFragmentShader,
+      transparent: true,
+      depthWrite: false,
+      depthTest: false,
+      blending: Three.AdditiveBlending,
+    });
+
+    this.fiberTips = new Three.Points(tipGeometry, tipMaterial);
+    this.fiberTips.frustumCulled = false;
+    this.fiberTips.renderOrder = 3;
+    this.scene.add(this.fiberTips);
   }
 
   createMorphAttributes(vertexCount, fillPosition) {
@@ -512,6 +865,7 @@ class FourStateVectorScene {
     this.renderer.setPixelRatio(pixelRatio);
     this.renderer.setSize(width, height, false);
     this.sharedUniforms.uPixelRatio.value = pixelRatio;
+    this.sharedUniforms.uLineWidthWorld.value = (this.camera.top - this.camera.bottom) / height;
     this.syncPointerUniforms();
     this.render(performance.now());
   }

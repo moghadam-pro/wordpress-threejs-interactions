@@ -13,14 +13,14 @@ add_action(
             'wm-interactive-stats',
             $component_url . '/styles.css',
             array(),
-            '1.0.0'
+            '1.1.0'
         );
 
         wp_enqueue_script_module(
             'wm-interactive-stats',
             $component_url . '/stats-section.js',
             array(),
-            '1.0.0'
+            '1.1.0'
         );
     }
 );

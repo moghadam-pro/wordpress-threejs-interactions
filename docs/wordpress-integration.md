@@ -28,14 +28,14 @@ add_action(
             'wm-vector-canvas',
             $component_url . '/styles.css',
             array(),
-            '1.0.0'
+            '1.1.0'
         );
 
         wp_enqueue_script_module(
             'wm-vector-canvas',
             $component_url . '/stats-section.js',
             array(),
-            '1.0.0'
+            '1.1.0'
         );
     }
 );
@@ -85,4 +85,3 @@ The default code imports Three.js from `cdn.jsdelivr.net`. A restrictive Content
 4. Check desktop, touch, keyboard, and reduced-motion modes.
 5. Confirm no duplicate element IDs when repeating the Bento card.
 6. Test the production CSP and CDN path, not only localhost.
-

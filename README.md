@@ -5,7 +5,7 @@
 Two dependency-light, WordPress-ready interaction components built with semantic HTML, scoped CSS, vanilla JavaScript, and Three.js:
 
 - **Interactive WebGL Bento Card** — pointer-following border light, subtle tilt/parallax, a reactive point field, and an accessible native dialog.
-- **Four-State Vector Canvas** — generated line/point geometry that morphs between radial, hemisphere, ribbon, and hourglass topologies and reacts locally to the pointer.
+- **Four-State Vector Canvas** — a fiber-optic first state with continuous-width strands, luminous tips, breeze motion, and brush-like pointer response, plus three generated morph targets.
 
 ![Four-state vector canvas](vector-canvas/previews/preview-state-3.png)
 
@@ -70,7 +70,7 @@ window.WMInteractiveBento.init(document);
 Switch the vector topology from existing controls:
 
 ```js
-window.WMVectorCanvas.setState('[data-wm-vector]', 0); // radial burst
+window.WMVectorCanvas.setState('[data-wm-vector]', 0); // fiber-optic spray
 window.WMVectorCanvas.setState('[data-wm-vector]', 1); // hemisphere routes
 window.WMVectorCanvas.setState('[data-wm-vector]', 2); // wave ribbons
 window.WMVectorCanvas.setState('[data-wm-vector]', 3); // hourglass curves
@@ -91,7 +91,7 @@ document.querySelector('[data-wm-vector]').dispatchEvent(
 - `ResizeObserver` keeps the canvas matched to the component.
 - `prefers-reduced-motion` disables continuous motion.
 - The Bento card retains a CSS visual fallback when WebGL or the CDN fails.
-- Pointer deformation affects generated coordinates; it is not a video or sprite animation.
+- The first state's pointer deformation bends connected ribbon geometry around a soft exclusion area; it is not a video or sprite animation.
 
 Read [architecture](docs/architecture.md) for the implementation model and [customization](docs/customization.md) for palettes, timing, geometry, and control wiring.
 
@@ -102,4 +102,3 @@ Current evergreen Chrome, Edge, Firefox, and Safari with WebGL and ES module sup
 ## License
 
 Project code and documentation are available under the [MIT License](LICENSE). Three.js is an external MIT-licensed dependency and is not vendored in this repository.
-

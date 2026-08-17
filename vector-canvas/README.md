@@ -4,7 +4,7 @@ A canvas-only, clean-room reconstruction of the four vector behaviours observed 
 
 ## The four states
 
-1. Radial line burst from the lower centre
+1. Fiber-optic spray from the lower centre, built from continuous-width ribbons with luminous tips and a slow reed-like breeze
 2. Curved routes forming a hemisphere
 3. Layered wave ribbons built from vertical vectors
 4. Symmetrical hourglass / butterfly curves
@@ -30,7 +30,7 @@ The included `wordpress-functions.php` uses `wp_enqueue_script_module()` for Wor
 The four small dots are only a minimal test control. You can remove `.wm-vector__switcher` and connect your own buttons through the public API:
 
 ```js
-window.WMVectorCanvas.setState('[data-wm-vector]', 0); // radial
+window.WMVectorCanvas.setState('[data-wm-vector]', 0); // fiber-optic spray
 window.WMVectorCanvas.setState('[data-wm-vector]', 1); // hemisphere
 window.WMVectorCanvas.setState('[data-wm-vector]', 2); // waves
 window.WMVectorCanvas.setState('[data-wm-vector]', 3); // hourglass
@@ -47,7 +47,10 @@ document.querySelector('[data-wm-vector]').dispatchEvent(
 ## Interaction and performance
 
 - Lines and endpoint particles are generated geometry, not images or copied assets.
-- The pointer locally repels nearby lines and points and moves a soft background light.
+- State `0` uses continuous indexed ribbon meshes, so strand diameter is stable and curves do not visually break at segment boundaries.
+- Every strand is anchored near the lower centre, sways with two low-frequency breeze waves, and carries a brighter additive tip halo.
+- The pointer opens a soft channel through nearby strands. Each strand chooses a consistent side and bends along its length instead of receiving disconnected per-vertex kicks.
+- The pointer also moves a soft background light.
 - Morph duration is `1450ms` and uses a two-phase collapse/expand path.
 - Three.js is pinned to `0.178.0`.
 - Rendering pauses outside the viewport or while the tab is hidden.
