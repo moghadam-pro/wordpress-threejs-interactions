@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <title>Interactive WebGL Bento Card</title>
+  <link rel="stylesheet" href="./styles.css">
+</head>
+<body class="wm-demo-page">
+  <main class="wm-demo-shell">
+    <section class="wm-demo-intro" aria-labelledby="wm-demo-title">
+      <p class="wm-demo-eyebrow">DEMO 01 · WEBGL BENTO</p>
+      <h1 id="wm-demo-title">کارت تعاملی با پس‌زمینه‌ی Three.js</h1>
+      <p>موس را روی کارت حرکت بده؛ میدان نقاط، نور لبه و عمق کارت هم‌زمان واکنش نشان می‌دهند.</p>
+    </section>
+
+    <section class="wm-bento-stage" aria-label="دموی کارت تعاملی">
+      <button
+        class="wm-bento"
+        type="button"
+        data-wm-bento
+        data-wm-dialog="wm-agentic-dialog"
+        data-color-a="#635bff"
+        data-color-b="#ff5db1"
+        data-color-c="#7dd3fc"
+        aria-labelledby="wm-bento-title"
+        aria-describedby="wm-bento-summary"
+        aria-haspopup="dialog"
+        aria-controls="wm-agentic-dialog"
+        aria-expanded="false"
+      >
+        <span class="wm-bento__glow" aria-hidden="true"></span>
+
+        <span class="wm-bento__surface">
+          <span class="wm-bento__webgl" aria-hidden="true">
+            <canvas class="wm-bento__canvas" data-wm-three-canvas></canvas>
+            <span class="wm-bento__fallback"></span>
+          </span>
+
+          <span class="wm-bento__grain" aria-hidden="true"></span>
+
+          <span class="wm-bento__header">
+            <span class="wm-bento__copy">
+              <span class="wm-bento__kicker">هوش تجاری</span>
+              <span class="wm-bento__title" id="wm-bento-title">فروش از طریق عامل‌های هوشمند</span>
+              <span class="wm-bento__summary" id="wm-bento-summary">یک تجربه‌ی خرید مکالمه‌ای، سریع و شخصی‌سازی‌شده.</span>
+            </span>
+
+            <span class="wm-bento__open-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" focusable="false">
+                <path d="M14 5h5v5M19 5l-7 7M10 19H5v-5M5 19l7-7"></path>
+              </svg>
+            </span>
+          </span>
+
+          <span class="wm-commerce-demo" aria-hidden="true">
+            <span class="wm-commerce-demo__chat">
+              <span class="wm-commerce-demo__bubble wm-commerce-demo__bubble--user">برای سفر آخر هفته یک استایل راحت می‌خواهم.</span>
+              <span class="wm-commerce-demo__bubble wm-commerce-demo__bubble--agent">این دو انتخاب با هم هماهنگ‌اند و برای هوای خنک مناسب‌اند.</span>
+            </span>
+
+            <span class="wm-commerce-demo__products">
+              <span class="wm-product-card">
+                <span class="wm-product-card__image wm-product-card__image--shirt"></span>
+                <span class="wm-product-card__name">پیراهن نرم</span>
+                <span class="wm-product-card__meta">آبی · متوسط</span>
+                <span class="wm-product-card__price">۱٬۲۹۰٬۰۰۰</span>
+              </span>
+
+              <span class="wm-product-card">
+                <span class="wm-product-card__image wm-product-card__image--hoodie"></span>
+                <span class="wm-product-card__name">هودی روزمره</span>
+                <span class="wm-product-card__meta">سرمه‌ای · متوسط</span>
+                <span class="wm-product-card__price">۲٬۱۹۰٬۰۰۰</span>
+              </span>
+            </span>
+
+            <span class="wm-commerce-demo__cta">ادامه‌ی خرید</span>
+          </span>
+        </span>
+      </button>
+
+      <p class="wm-demo-hint">برای بازشدن جزئیات، روی کارت کلیک کن.</p>
+    </section>
+  </main>
+
+  <dialog class="wm-bento-dialog" id="wm-agentic-dialog" aria-labelledby="wm-dialog-title">
+    <div class="wm-bento-dialog__panel">
+      <button class="wm-bento-dialog__close" type="button" data-wm-dialog-close aria-label="بستن پنجره">
+        <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+          <path d="M6 6l12 12M18 6L6 18"></path>
+        </svg>
+      </button>
+
+      <p class="wm-bento-dialog__eyebrow">AGENTIC COMMERCE</p>
+      <h2 id="wm-dialog-title">یک کارت، یک ورودی به تجربه‌ای کامل‌تر</h2>
+      <p>محتوای این دیالوگ عمداً از افکت کارت جداست؛ می‌توانی هر فرم، محصول یا CTA وردپرس را اینجا قرار بدهی.</p>
+
+      <div class="wm-bento-dialog__grid">
+        <article>
+          <span>01</span>
+          <h3>واکنش به اشاره‌گر</h3>
+          <p>نور لبه، عمق کارت و میدان ذرات از یک مختصات نرمال‌شده تغذیه می‌شوند.</p>
+        </article>
+        <article>
+          <span>02</span>
+          <h3>WebGL مستقل</h3>
+          <p>صحنه‌ی Three.js بدون مدل یا تکسچر خارجی ساخته شده و سبک باقی می‌ماند.</p>
+        </article>
+        <article>
+          <span>03</span>
+          <h3>Fallback واقعی</h3>
+          <p>اگر WebGL یا motion غیرفعال باشد، گرادیان CSS همچنان ظاهر کارت را حفظ می‌کند.</p>
+        </article>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="./bento-card.js"></script>
+</body>
+</html>

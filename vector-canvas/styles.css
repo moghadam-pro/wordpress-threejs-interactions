@@ -1,0 +1,131 @@
+/* Canvas-only four-state vector component */
+
+.wm-vector-demo-page {
+  min-height: 100vh;
+  margin: 0;
+  background: #0c123d;
+}
+
+.wm-vector-demo-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+}
+
+.wm-vector,
+.wm-vector *,
+.wm-vector *::before,
+.wm-vector *::after {
+  box-sizing: border-box;
+}
+
+.wm-vector {
+  position: relative;
+  width: 100%;
+  height: clamp(360px, 42vw, 560px);
+  min-height: 0;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 112%, rgba(247, 248, 255, 0.94), transparent 36%),
+    radial-gradient(circle at 58% 70%, rgba(123, 105, 255, 0.6), transparent 52%),
+    linear-gradient(180deg, #1c2468 0%, #4038b0 62%, #6f60ff 100%);
+  border-block: 1px solid rgba(226, 231, 255, 0.14);
+  direction: ltr;
+  isolation: isolate;
+  touch-action: pan-y;
+}
+
+.wm-vector__canvas {
+  position: absolute;
+  z-index: 1;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  transition: opacity 500ms ease;
+}
+
+.wm-vector.is-webgl-ready .wm-vector__canvas {
+  opacity: 1;
+}
+
+.wm-vector__switcher {
+  position: absolute;
+  z-index: 3;
+  inset-block-end: 18px;
+  inset-inline-start: 50%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 11px;
+  background: rgba(14, 18, 57, 0.26);
+  border: 1px solid rgba(238, 241, 255, 0.22);
+  border-radius: 999px;
+  opacity: 0.58;
+  backdrop-filter: blur(14px);
+  transform: translateX(-50%);
+  transition: opacity 220ms ease, background-color 220ms ease;
+}
+
+.wm-vector:is(:hover, :focus-within) .wm-vector__switcher {
+  opacity: 1;
+  background: rgba(14, 18, 57, 0.42);
+}
+
+.wm-vector__switcher button {
+  width: 10px;
+  height: 10px;
+  padding: 0;
+  background: rgba(246, 248, 255, 0.38);
+  border: 0;
+  border-radius: 999px;
+  appearance: none;
+  cursor: pointer;
+  transition: width 400ms cubic-bezier(0.16, 1, 0.3, 1), background-color 250ms ease, transform 250ms ease;
+}
+
+.wm-vector__switcher button:is(:hover, :focus-visible) {
+  background: rgba(255, 255, 255, 0.82);
+  transform: scale(1.2);
+}
+
+.wm-vector__switcher button:focus-visible {
+  outline: 2px solid #fff;
+  outline-offset: 3px;
+}
+
+.wm-vector__switcher button.is-active {
+  width: 28px;
+  background: #fff;
+}
+
+.wm-vector__status {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 560px) {
+  .wm-vector {
+    height: clamp(330px, 94vw, 430px);
+  }
+
+  .wm-vector__switcher {
+    inset-block-end: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .wm-vector__canvas,
+  .wm-vector__switcher,
+  .wm-vector__switcher button {
+    transition-duration: 0.01ms !important;
+  }
+}

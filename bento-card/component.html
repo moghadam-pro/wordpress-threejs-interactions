@@ -1,0 +1,73 @@
+<!--
+  Markup-only version for a WordPress Custom HTML block or theme template.
+  Load styles.css and bento-card.js once on the page.
+-->
+<section class="wm-bento-stage" aria-label="کارت فروش هوشمند">
+  <button
+    class="wm-bento"
+    type="button"
+    data-wm-bento
+    data-wm-dialog="wm-agentic-dialog"
+    data-color-a="#635bff"
+    data-color-b="#ff5db1"
+    data-color-c="#7dd3fc"
+    aria-labelledby="wm-bento-title"
+    aria-describedby="wm-bento-summary"
+    aria-haspopup="dialog"
+    aria-controls="wm-agentic-dialog"
+    aria-expanded="false"
+  >
+    <span class="wm-bento__glow" aria-hidden="true"></span>
+    <span class="wm-bento__surface">
+      <span class="wm-bento__webgl" aria-hidden="true">
+        <canvas class="wm-bento__canvas" data-wm-three-canvas></canvas>
+        <span class="wm-bento__fallback"></span>
+      </span>
+      <span class="wm-bento__grain" aria-hidden="true"></span>
+
+      <span class="wm-bento__header">
+        <span class="wm-bento__copy">
+          <span class="wm-bento__kicker">هوش تجاری</span>
+          <span class="wm-bento__title" id="wm-bento-title">فروش از طریق عامل‌های هوشمند</span>
+          <span class="wm-bento__summary" id="wm-bento-summary">یک تجربه‌ی خرید مکالمه‌ای، سریع و شخصی‌سازی‌شده.</span>
+        </span>
+        <span class="wm-bento__open-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" focusable="false"><path d="M14 5h5v5M19 5l-7 7M10 19H5v-5M5 19l7-7"></path></svg>
+        </span>
+      </span>
+
+      <span class="wm-commerce-demo" aria-hidden="true">
+        <span class="wm-commerce-demo__chat">
+          <span class="wm-commerce-demo__bubble wm-commerce-demo__bubble--user">برای سفر آخر هفته یک استایل راحت می‌خواهم.</span>
+          <span class="wm-commerce-demo__bubble wm-commerce-demo__bubble--agent">این دو انتخاب با هم هماهنگ‌اند و برای هوای خنک مناسب‌اند.</span>
+        </span>
+        <span class="wm-commerce-demo__products">
+          <span class="wm-product-card">
+            <span class="wm-product-card__image wm-product-card__image--shirt"></span>
+            <span class="wm-product-card__name">پیراهن نرم</span>
+            <span class="wm-product-card__meta">آبی · متوسط</span>
+            <span class="wm-product-card__price">۱٬۲۹۰٬۰۰۰</span>
+          </span>
+          <span class="wm-product-card">
+            <span class="wm-product-card__image wm-product-card__image--hoodie"></span>
+            <span class="wm-product-card__name">هودی روزمره</span>
+            <span class="wm-product-card__meta">سرمه‌ای · متوسط</span>
+            <span class="wm-product-card__price">۲٬۱۹۰٬۰۰۰</span>
+          </span>
+        </span>
+        <span class="wm-commerce-demo__cta">ادامه‌ی خرید</span>
+      </span>
+    </span>
+  </button>
+</section>
+
+<dialog class="wm-bento-dialog" id="wm-agentic-dialog" aria-labelledby="wm-dialog-title">
+  <div class="wm-bento-dialog__panel">
+    <button class="wm-bento-dialog__close" type="button" data-wm-dialog-close aria-label="بستن پنجره">
+      <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M6 6l12 12M18 6L6 18"></path></svg>
+    </button>
+    <p class="wm-bento-dialog__eyebrow">AGENTIC COMMERCE</p>
+    <h2 id="wm-dialog-title">عنوان محتوای کامل‌تر</h2>
+    <p>محتوای دلخواه وردپرس، فرم یا معرفی محصول را اینجا قرار بده.</p>
+  </div>
+</dialog>
